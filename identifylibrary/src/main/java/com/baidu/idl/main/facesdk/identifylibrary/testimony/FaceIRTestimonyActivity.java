@@ -40,6 +40,7 @@ import com.Exception.DKCloudIDException;
 import com.Exception.DeviceNoResponseException;
 import com.Tool.MyTTS;
 import com.Tool.StringTool;
+import com.Tool.TtsManager;
 import com.baidu.idl.main.facesdk.FaceInfo;
 import com.baidu.idl.main.facesdk.identifylibrary.BaseActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.R;
@@ -201,6 +202,8 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
         initView();
         initCard();
         initTemperature();
+        //在应用启动时初始化一次
+        TtsManager.getInstance(this).init();
 
         // 屏幕的宽
         int displayWidth = DensityUtils.getDisplayWidth(mContext);
@@ -320,8 +323,9 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
                             System.out.println("开始解析");
 //                            logViewln(null);
 //                            logViewln( "正在读卡，请勿移动身份证!" );
-                            myTTS.speak("正在读卡，请勿移动身份证");
-
+//                            myTTS.speak("正在读卡，请勿移动身份证");
+                            //在需要使用的地方调用
+                            TtsManager.getInstance(getActivity()).speakText("正在读卡，请勿移动身份证");
                             initData = Arrays.copyOfRange(data, 4, data.length - 1);
                             SamVIdCard samVIdCard = new SamVIdCard(serialManager, initData);
                             IDCard idCard = new IDCard(samVIdCard);
@@ -359,7 +363,8 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
 //                                    logViewln(e.getMessage());
 
                                     //返回读取失败
-                                    myTTS.speak("请不要移动身份证");
+//                                    myTTS.speak("请不要移动身份证");
+                                    TtsManager.getInstance(getActivity()).speakText("请不要移动身份证");
 //                                    logViewln( "正在重新解析.." );
                                     serialManager.send(StringTool.hexStringToBytes("AA0118"));
                                     return;
@@ -413,7 +418,8 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
                                 tv_body_temperature.setText(temperature+"℃");
                                 tv_body_temperature.setBackgroundColor(Color.GREEN);
                             } else if (temp > 37.3) {
-                                myTTS.speak("体温异常");
+//                                myTTS.speak("体温异常");
+                                TtsManager.getInstance(getActivity()).speakText("体温异常");
                                 tv_body_temperature.setText(temperature+"℃");
                                 tv_body_temperature.setBackgroundColor(Color.RED);
                             } else {
@@ -466,7 +472,8 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 //验证通过
                 if (response.isSuccessful()){
-                    myTTS.speak("请刷脸认证");
+                    TtsManager.getInstance(getActivity()).speakText("请刷脸认证");
+//                    myTTS.speak("请刷脸认证");
                     Log.i("onResponse","isSuccessful");
                     String result = response.body().string();
                     JsonRootBean newsBeanList = JsonUtils.deserialize(result, JsonRootBean.class);
@@ -883,7 +890,9 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
                         livenessTipsPleaseFailTv.setText("识别成功");
                         livenessTipsFailIv.setImageResource(R.mipmap.tips_success);
 
-                        myTTS.speak("核验通过");
+//                        myTTS.speak("核验通过");
+                        //在需要使用的地方调用
+                        TtsManager.getInstance(getActivity()).speakText("核验通过");
                     } else {
                         livenessTipsFailTv.setText("人证核验未通过");
                         livenessTipsFailTv.setTextColor(
