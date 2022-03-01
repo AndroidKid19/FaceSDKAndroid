@@ -109,12 +109,12 @@
     <string name="cw_cameradisplay">根据镜头或者使用设备差异，可能存在 RGB/NIR/Depth 图像帧镜像的问题，可通过以下设置进行调节。常见于镜头前置后置切换。</string>
 
     <string name="popup_success">激活成功</string>
-    <string name="home_title">人脸应用套件</string>
+    <string name="home_title">榆阳智云</string>
     <string name="home_gate">闸机模式</string>
     <string name="home_firstrun_regitst">首次使用请先进行人脸注册</string>
     <string name="home_gate_english">GATE MODE</string>
     <string name="home_check">访客登记</string>
-    <string name="home_check_english">ATTENDANCE MODE</string>
+    <string name="home_check_english">VISITOR REGISTRATION</string>
     <string name="home_pay">支付模式</string>
     <string name="home_pay_english">PAYMENT MODE</string>home_checkTv
     <string name="home_attribute">属性模式</string>

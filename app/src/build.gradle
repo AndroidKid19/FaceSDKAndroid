@@ -70,5 +70,6 @@ dependencies {
     implementation project(':paymentlibrary')
     implementation project(':attrbutelibrary')
     implementation project(':drivermonitorlibrary')
+    implementation project(':dkcloud')
 
 }

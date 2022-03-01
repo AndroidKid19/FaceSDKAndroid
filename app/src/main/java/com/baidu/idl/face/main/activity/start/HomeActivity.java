@@ -5,11 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -22,9 +25,9 @@ import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import androidx.annotation.Nullable;
-
+import androidx.appcompat.widget.AppCompatEditText;
+import com.Tool.URLUtils;
 import com.baidu.idl.face.main.activity.BaseActivity;
 import com.baidu.idl.face.main.attribute.activity.attribute.FaceAttributeRgbActivity;
 import com.baidu.idl.face.main.attribute.utils.AttributeConfigUtils;
@@ -35,9 +38,8 @@ import com.baidu.idl.face.main.finance.activity.finance.FaceNIRFinanceActivity;
 import com.baidu.idl.face.main.finance.activity.finance.FaceRGBFinanceActivity;
 import com.baidu.idl.face.main.finance.activity.finance.FaceRgbNirDepthFinanceActivity;
 import com.baidu.idl.face.main.finance.utils.FinanceConfigUtils;
+import com.baidu.idl.face.main.finance.utils.KeyboardsUtils;
 import com.baidu.idl.facesdkdemo.R;
-import com.baidu.idl.main.facesdk.FaceGaze;
-import com.baidu.idl.main.facesdk.FaceInfo;
 import com.baidu.idl.main.facesdk.activity.gate.FaceDepthGateActivity;
 import com.baidu.idl.main.facesdk.activity.gate.FaceNIRGateActivriy;
 import com.baidu.idl.main.facesdk.activity.gate.FaceRGBGateActivity;
@@ -46,7 +48,6 @@ import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceDepthAttendan
 import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceNIRAttendanceActivity;
 import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceRGBAttendanceActivity;
 import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceRGBNirDepthAttendanceActivity;
-import com.baidu.idl.main.facesdk.attendancelibrary.model.LivenessModel;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.AttendanceConfigUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonRootBean;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonUtils;
@@ -61,10 +62,6 @@ import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceIRTestimonyActiv
 import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceRGBIRDepthTestimonyActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceRGBPersonActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.utils.IdentifyConfigUtils;
-import com.baidu.idl.main.facesdk.model.BDFaceDetectListConf;
-import com.baidu.idl.main.facesdk.model.BDFaceImageInstance;
-import com.baidu.idl.main.facesdk.model.BDFaceInstance;
-import com.baidu.idl.main.facesdk.model.BDFaceSDKCommon;
 import com.baidu.idl.main.facesdk.model.SingleBaseConfig;
 import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceDepthPaymentActivity;
 import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceNIRPaymentActivity;
@@ -72,26 +69,21 @@ import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceRGBPayment
 import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceRgbNirDepthPaymentActivity;
 import com.baidu.idl.main.facesdk.paymentlibrary.utils.PaymentConfigUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.activity.UserManagerActivity;
-import com.baidu.idl.main.facesdk.registerlibrary.user.callback.FaceFeatureCallBack;
-import com.baidu.idl.main.facesdk.registerlibrary.user.manager.ImportFileManager;
-import com.baidu.idl.main.facesdk.registerlibrary.user.manager.ShareManager;
-import com.baidu.idl.main.facesdk.registerlibrary.user.manager.UserInfoManager;
 import com.baidu.idl.main.facesdk.registerlibrary.user.manager.VisitorFaceSDKManager;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewActivity;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewDepthActivity;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewNIRActivity;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewRgbNirDepthActivity;
-import com.baidu.idl.main.facesdk.registerlibrary.user.utils.FileUtils;
 import com.baidu.idl.main.facesdk.utils.DensityUtils;
 import com.baidu.idl.main.facesdk.utils.GateConfigUtils;
 import com.baidu.idl.main.facesdk.utils.StreamUtil;
 import com.baidu.idl.main.facesdk.utils.ToastUtils;
 import com.baidu.idl.main.facesdk.view.PreviewTexture;
 import com.blankj.utilcode.util.CollectionUtils;
-import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.ImageUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ObjectUtils;
+import com.blankj.utilcode.util.RegexUtils;
 import com.blankj.utilcode.util.StringUtils;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.listener.DBLoadListener;
@@ -108,12 +100,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import createbest.sdk.bihu.temperature.ITemperature;
+import createbest.sdk.bihu.temperature.Temperature_RB32x3290A;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -125,6 +120,7 @@ import okhttp3.Response;
 
 //您好！您购买的人脸识别一体机，百度受权码为：QUXD-XXEX-HMDB-ESXY,  受权码对应设备受权，请注意保管。
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
+
     private Context mContext;
     private Handler mHandler = new Handler();
     private PopupWindow popupWindow;
@@ -149,11 +145,18 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private View progressGroup;
     private boolean isDBLoad;
     private Future future;
+    private AppCompatEditText et_qrcode;
+    private TextView tv_body_temperature;
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         return super.onKeyDown(keyCode, event);
     }
+
+    /**
+     * 测温
+     */
+    private ITemperature temperature;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,9 +178,47 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         initUserManagePopupWindow();
         initDBApi();
 //        initListener();
+        initTemperature();
     }
 
-    private void initDBApi(){
+    /**
+     * 测温头初始化
+     */
+    private void initTemperature() {
+        temperature = Temperature_RB32x3290A.getInstance();
+        temperature.setReader(new ITemperature.Reader() {
+            @Override
+            public void onGetTemperature(final float temp, final boolean jarless) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String temperature = new DecimalFormat("00.00").format(temp);
+                        if (jarless) {
+                            if (temp < 36) {
+                                tv_body_temperature.setText(temperature + "℃");
+                                tv_body_temperature.setTextColor(Color.GREEN);
+                            } else if (temp > 37.3) {
+//                                myTTS.speak("体温异常");
+                                com.Tool.TtsManager.getInstance(HomeActivity.this).speakText("体温异常");
+                                tv_body_temperature.setText(temperature + "℃");
+                                tv_body_temperature.setTextColor(Color.RED);
+                            } else {
+                                tv_body_temperature.setText(temperature + "℃");
+                                tv_body_temperature.setTextColor(Color.GREEN);
+                            }
+                        } else {
+                            tv_body_temperature.setText(temperature + "℃");
+                            tv_body_temperature.setTextColor(Color.GREEN);
+                        }
+                    }
+                });
+            }
+        });
+        temperature.open("/dev/ttyS4");
+    }
+
+
+    private void initDBApi() {
         if (future != null && !future.isDone()) {
             future.cancel(true);
         }
@@ -186,11 +227,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             @Override
             public void run() {
                 FaceApi.getInstance().init(new DBLoadListener() {
-
                     @Override
                     public void onStart(int successCount) {
-                        if (successCount < 5000 && successCount != 0){
-
+                        if (successCount < 5000 && successCount != 0) {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -214,7 +253,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     }
 
                     @Override
-                    public void onComplete(final List<User> users , final int successCount) {
+                    public void onComplete(final List<User> users, final int successCount) {
 //                        FileUtils.saveDBList(HomeActivity.this, users);
                         runOnUiThread(new Runnable() {
                             @Override
@@ -246,20 +285,20 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         });
     }
 
-    private void loadProgress(float i){
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setProgress((int) ((i / 5000f) * 100));
-                    progressText.setText(((int) ((i / 5000f) * 100)) + "%");
-                    if (i < 5000){
-                        loadProgress(i + 100);
-                    }else {
-                        progressGroup.setVisibility(View.GONE);
-                        isDBLoad = true;
-                    }
+    private void loadProgress(float i) {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setProgress((int) ((i / 5000f) * 100));
+                progressText.setText(((int) ((i / 5000f) * 100)) + "%");
+                if (i < 5000) {
+                    loadProgress(i + 100);
+                } else {
+                    progressGroup.setVisibility(View.GONE);
+                    isDBLoad = true;
                 }
-            },10);
+            }
+        }, 10);
     }
 
     private void initFirstPopupWindowTip() {
@@ -305,8 +344,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         FaceApi.getInstance().cleanRecords();
     }
 
-    private void initRGBCheck(){
-        if (isSetCameraId()){
+    private void initRGBCheck() {
+        if (isSetCameraId()) {
             return;
         }
         int mCameraNum = Camera.getNumberOfCameras();
@@ -314,7 +353,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, cameraInfo);
         }
-        if (mCameraNum > 1){
+        if (mCameraNum > 1) {
             try {
                 mCamera = new Camera[mCameraNum];
                 previewTextures = new PreviewTexture[mCameraNum];
@@ -325,13 +364,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     @Override
                     public void onPreviewFrame(byte[] data, Camera camera) {
                         int check = StreamUtil.checkNirRgb(data, PREFER_WIDTH, PREFER_HEIGHT);
-                        if (check == 1){
+                        if (check == 1) {
                             setRgbCameraId(0);
                         }
                         release(0);
                     }
                 });
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             try {
@@ -342,13 +381,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     @Override
                     public void onPreviewFrame(byte[] data, Camera camera) {
                         int check = StreamUtil.checkNirRgb(data, PREFER_WIDTH, PREFER_HEIGHT);
-                        if (check == 1){
+                        if (check == 1) {
                             setRgbCameraId(1);
                         }
                         release(1);
                     }
                 });
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
@@ -356,7 +395,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-    private void setRgbCameraId(int index){
+    private void setRgbCameraId(int index) {
         SingleBaseConfig.getBaseConfig().setRBGCameraId(index);
         com.baidu.idl.main.facesdk.attendancelibrary.model.SingleBaseConfig.getBaseConfig().setRBGCameraId(index);
         com.baidu.idl.face.main.finance.model.SingleBaseConfig.getBaseConfig().setRBGCameraId(index);
@@ -378,7 +417,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         RegisterConfigUtils.modityJson();
 
     }
-    private boolean isSetCameraId(){
+
+    private boolean isSetCameraId() {
         if (SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1 ||
                 com.baidu.idl.main.facesdk.attendancelibrary.
                         model.SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1 ||
@@ -395,21 +435,21 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 com.baidu.idl.main.facesdk.identifylibrary.model.
                         SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1 ||
                 com.baidu.idl.main.facesdk.registerlibrary.user.model.
-                        SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1){
+                        SingleBaseConfig.getBaseConfig().getRBGCameraId() == -1) {
             return false;
-        }else {
+        } else {
             return true;
         }
     }
 
-    private void release(int id){
+    private void release(int id) {
         if (mCamera != null && mCamera[id] != null) {
-                    if (mCamera[id] != null) {
-                        mCamera[id].setPreviewCallback(null);
-                        mCamera[id].stopPreview();
-                        previewTextures[id].release();
-                        mCamera[id].release();
-                        mCamera[id] = null;
+            if (mCamera[id] != null) {
+                mCamera[id].setPreviewCallback(null);
+                mCamera[id].stopPreview();
+                previewTextures[id].release();
+                mCamera[id].release();
+                mCamera[id] = null;
             }
         }
     }
@@ -487,6 +527,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void initView() {
+        et_qrcode = findViewById(R.id.et_qrcode);
+        tv_body_temperature = findViewById(R.id.tv_body_temperature);
         layout_home = findViewById(R.id.layout_home);
         ImageView home_settingImg = findViewById(R.id.home_settingImg);
         home_settingImg.setOnClickListener(this);
@@ -519,11 +561,33 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         progressBar = findViewById(R.id.progress_bar);
         progressText = findViewById(R.id.progress_text);
         progressGroup = findViewById(R.id.progress_group);
+
+        et_qrcode.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                //校验18位身份证号码通过在进行查询个人预约信息
+                if (RegexUtils.isIDCard18(s.toString())){
+                    LogUtils.i(s);
+                    //根据身份证号查询用户信息
+                    queryVisitRegisterRecordList(s.toString());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+        KeyboardsUtils.hintKeyBoards(et_qrcode);
     }
 
     @Override
     public void onClick(View view) {
-        if (!isDBLoad){
+        if (!isDBLoad) {
             return;
         }
         switch (view.getId()) {
@@ -592,7 +656,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             case R.id.home_personRl:
                 mLiveType = com.baidu.idl.main.facesdk.identifylibrary.model.SingleBaseConfig.getBaseConfig().getType();
 
-                Log.i("HomeActivity",mLiveType+"");
+                Log.i("HomeActivity", mLiveType + "");
                 // 人证核验
                 judgeLiveType(mLiveType,
                         FaceRGBPersonActivity.class,
@@ -622,28 +686,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         @Override
         public void onCompleted(String result) {
             //获取二维码解析内容
-            if (StringUtils.isEmpty(result)){
+            if (StringUtils.isEmpty(result)) {
                 ToastUtils.toast(HomeActivity.this, "二维码解析错误,请检查二维码");
                 return;
             }
-           String [] ercode = result.split("/");
-            if (ObjectUtils.isEmpty(ercode) || ercode.length < 5){
-                ToastUtils.toast(HomeActivity.this, "二维码解析错误,请检查二维码");
-                return;
-            }
-
-            LogUtils.json(ercode);
-
-            SharedPreferences sharedPreferences = HomeActivity.this.getSharedPreferences("type", MODE_PRIVATE);
-            mLiveType = sharedPreferences.getInt("type", 0);
-            com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.getInstance().setActiveLog();
-//            judgeLiveType(mLiveType, FaceRegisterNewActivity.class, FaceRegisterNewNIRActivity.class,
-//                    FaceRegisterNewDepthActivity.class, FaceRegisterNewRgbNirDepthActivity.class);
-
-            Intent intent = new Intent(HomeActivity.this,FaceRegisterNewActivity.class);
-            intent.putExtra("result",result);
-            startActivity(intent);
-
+            //根据身份证号查询用户信息
+            queryVisitRegisterRecordList(result);
         }
 
         @Override
@@ -660,15 +708,14 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
     /**
      * 查询已预约人员
-     * */
-    public void queryVisitRegisterRecordList(){
-        //清空人脸库
-        FaceApi.getInstance().userClean();
+     */
+    public void queryVisitRegisterRecordList(String certificateNumber) {
         //定义预约用户查询接口URL
-        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/queryVisitRegisterRecordList";
+        String hostUrl = URLUtils.hostUrl+"/organ/visitRegisterRecord/queryByVisitRegisterRecord";
         OkHttpClient client = new OkHttpClient();
-        Map<String,String> paramsMap = new HashMap<>();
+        Map<String, String> paramsMap = new HashMap<>();
         //查询未到访的
+        paramsMap.put("certificateNumber", certificateNumber);
         paramsMap.put("visitStatus","0");
         Gson gson = new Gson();
         /**
@@ -684,23 +731,34 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                //清空身份证信息
+                runOnUiThread(() -> et_qrcode.setText(""));
                 //验证通过
-                if (response.isSuccessful()){
-                    Log.i("onResponse","isSuccessful");
+                if (response.isSuccessful()) {
+                    Log.i("onResponse", "isSuccessful");
                     String result = response.body().string();
                     JsonRootBean newsBeanList = JsonUtils.deserialize(result, JsonRootBean.class);
-                    if (CollectionUtils.isNotEmpty(newsBeanList.getData().getList())){
-                        //用户列表
-                        getFeatures(newsBeanList.getData().getList());
+                    if (ObjectUtils.isNotEmpty(newsBeanList) && ObjectUtils.isNotEmpty(newsBeanList.getData())) {
+                        //用户信息
+                        LogUtils.json(newsBeanList.getData());
+                        Intent intent = new Intent(HomeActivity.this, FaceRegisterNewActivity.class);
+                        intent.putExtra("userName", newsBeanList.getData().getName());
+                        intent.putExtra("certificateNumber", newsBeanList.getData().getCertificateNumber());
+                        intent.putExtra("orgTitle", newsBeanList.getData().getOrgTitle());
+                        startActivity(intent);
                     }
-                }else{
-
+                } else {
+                    ToastUtils.toast(HomeActivity.this,
+                            "暂无预约信息");
                 }
             }
 
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.i("onResponse","-------------------------------");
+                et_qrcode.setText("");
+                ToastUtils.toast(HomeActivity.this,
+                        "二维码解析错误");
+                Log.i("onResponse", "-------------------------------");
                 //...
             }
 
@@ -708,11 +766,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     }
 
 
-
-
     /**
      * 提取特征值
-     *
      */
     private void getFeatures(List<VisitRegisterRecordBean> list) {
         LogUtils.json(list);
@@ -726,7 +781,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             Bitmap mCropBitmap = ImageUtils.getBitmap(file);
             LogUtils.i(visitRegisterRecordBean.getName());
             // 开始导入
-            VisitorFaceSDKManager.getInstance().asyncImport(mCropBitmap,visitRegisterRecordBean.getName(),visitRegisterRecordBean.getCertificateNumber()+"."+suffix);
+            VisitorFaceSDKManager.getInstance().asyncImport(mCropBitmap, visitRegisterRecordBean.getName(), visitRegisterRecordBean.getCertificateNumber() + "." + suffix);
         }
 
 
@@ -821,7 +876,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
             case 1: { // RGB活体
                 startActivity(new Intent(HomeActivity.this, rgbCls));
-                Log.i("HomeActivity",rgbCls.getName());
+                Log.i("HomeActivity", rgbCls.getName());
                 break;
             }
 

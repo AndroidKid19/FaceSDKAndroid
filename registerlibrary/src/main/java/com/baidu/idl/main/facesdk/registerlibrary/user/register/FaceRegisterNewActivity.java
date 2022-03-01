@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 
 import androidx.annotation.CallSuper;
 
+import com.Tool.URLUtils;
 import com.baidu.idl.main.facesdk.model.BDFaceImageInstance;
 import com.baidu.idl.main.facesdk.model.BDFaceSDKCommon;
 import com.baidu.idl.main.facesdk.registerlibrary.R;
@@ -110,6 +112,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     private TextView text_card;
     private TextView text_organ;
     private TextView tv_body_temperature;
+    private TextView tv_message;
 
     /**
      * 测温
@@ -261,22 +264,17 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         text_card = findViewById(R.id.text_card);
         text_organ = findViewById(R.id.text_organ);
         tv_body_temperature = findViewById(R.id.tv_body_temperature);
+        tv_message = findViewById(R.id.tv_message);
         //初始化访客信息
         initVisitorData();
     }
 
 
     private void initVisitorData() {
-        if (getIntent().getStringExtra("result") != null) {
-            String[] ercode = getIntent().getStringExtra("result").split("/");
-            if (ObjectUtils.isEmpty(ercode) || ercode.length < 5) {
-                ToastUtils.toast(FaceRegisterNewActivity.this, "二维码解析错误,请检查二维码");
-                return;
-            }
-            text_collect.setText(ercode[0]);
-            text_card.setText(ercode[1]);
-            text_organ.setText(ercode[4]);
-            LogUtils.json(ercode);
+        if (getIntent().getStringExtra("userName") != null) {
+            text_collect.setText(getIntent().getStringExtra("userName"));
+            text_card.setText(getIntent().getStringExtra("certificateNumber"));
+            text_organ.setText(getIntent().getStringExtra("orgTitle"));
         }
     }
 
@@ -597,7 +595,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
      */
     private void uploadHeadFile(File fileFromBitmap) {
         //定义预约用户查询接口URL
-        String hostUrl = "http://8.141.167.159:8990/organ/fileUpload/upload";
+        String hostUrl = URLUtils.hostUrl+"/organ/fileUpload/upload";
         OkHttpClient client = new OkHttpClient();
         /**
          * 创建请求的参数body
@@ -624,7 +622,11 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                     JsonRootBean jsonRootBean = JsonUtils.deserialize(result, JsonRootBean.class);
                     LogUtils.json(jsonRootBean);
                     if (!StringUtils.isEmpty(jsonRootBean.getData().getFileList().get(0).getUrl())) {
-                        createVisitRegisterRecord(jsonRootBean.getData().getFileList().get(0).getUrl());
+                        //更新用户信息
+                        updateByCertificateNumber(getIntent().getStringExtra("certificateNumber"),jsonRootBean.getData().getFileList().get(0).getUrl());
+                        //提交成功
+                        TtsManager.getInstance(FaceRegisterNewActivity.this).speakText("登记成功,当前体温"+tv_body_temperature.getText().toString());
+                        cdTimer.start();
                     }
                 }
             }
@@ -645,7 +647,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     public void createVisitRegisterRecord(String coverPictureUrl) {
         final String[] ercode = getIntent().getStringExtra("result").split("/");
         //定义提交预约人员接口URL
-        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/createVisitRegisterRecord";
+        String hostUrl = URLUtils.hostUrl+"/organ/visitRegisterRecord/createVisitRegisterRecord";
         OkHttpClient client = new OkHttpClient();
         Map<String, String> paramsMap = new HashMap<>();
         paramsMap.put("name", ercode[0]);
@@ -676,8 +678,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                     if (newsBeanList.getRespCode().equals("0000")) {
                         //提交成功
                         TtsManager.getInstance(FaceRegisterNewActivity.this).speakText("登记成功,当前体温"+tv_body_temperature.getText().toString());
-                        updateByCertificateNumber(ercode[1]);
                     }
+                    cdTimer.start();
+
                 } else {
 
                 }
@@ -693,18 +696,35 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     }
 
     /**
+     * Parameters:
+     * millisInFuture   The number of millis in the future from the call to start() until the countdown is done and onFinish() is called.
+     * countDownInterval    The interval along the way to receive onTick(long) callbacks.
+     */
+    private CountDownTimer cdTimer = new CountDownTimer(10000, 1000) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+            tv_message.setText("当前页即将在"+(millisUntilFinished / 1000) + "秒"+"后关闭");
+        }
+
+        @Override
+        public void onFinish() {
+            finish();
+        }
+    };
+
+    /**
      * 根据身份证号 校验是否预约
      *  certificateNumber; 证件号码
      * visitStatus 到访状态；0未到访；1已到访
      * */
-    public void updateByCertificateNumber(String cardNumber){
-        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/updateByCertificateNumber";
+    public void updateByCertificateNumber(String cardNumber,String personalPhotos){
+        String hostUrl = URLUtils.hostUrl+"/organ/visitRegisterRecord/updateByCertificateNumber";
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
-
         RequestBody formBody = new FormBody.Builder()
                 .add("certificateNumber",cardNumber)
                 .add("visitStatus","1")
+                .add("personalPhotos",personalPhotos)
                 .build();
 
         Map<String,String> paramsMap = new HashMap<>();

@@ -6,16 +6,19 @@
     android:layout_height="match_parent"
     android:background="#121212"
     tools:context="com.baidu.idl.face.main.activity.start.HomeActivity">
+
     <TextureView
         android:id="@+id/check_rgb_texture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:alpha="0"/>
+        android:alpha="0" />
+
     <TextureView
         android:id="@+id/check_nir_texture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:alpha="0"/>
+        android:alpha="0" />
+
     <RelativeLayout
         android:id="@+id/home_title"
         android:layout_width="match_parent"
@@ -38,17 +41,18 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_marginRight="21dp"
-            android:visibility="gone"
-            android:background="@mipmap/icon_titlebar_setting" />
+            android:background="@mipmap/icon_titlebar_setting"
+            android:visibility="gone" />
 
         <ImageView
+            android:visibility="gone"
             android:id="@+id/home_menuImg"
             android:layout_width="25dp"
             android:layout_height="25dp"
-            android:clickable="true"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_marginRight="21dp"
+            android:clickable="true"
             android:src="@mipmap/icon_titlebar_menu" />
 
     </RelativeLayout>
@@ -62,13 +66,13 @@
 
 
     <RelativeLayout
-        android:layout_marginLeft="36dp"
-        android:layout_marginRight="36dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/home_dataTv"
         android:layout_below="@+id/home_view"
+        android:layout_marginLeft="36dp"
         android:layout_marginTop="6.7dp"
+        android:layout_marginRight="36dp"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:visibility="visible">
@@ -79,12 +83,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_horizontal">
+
             <RelativeLayout
-                android:layout_weight="1"
                 android:id="@+id/home_checkRl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@+id/home_gateRl">
+                android:layout_toRightOf="@+id/home_gateRl"
+                android:layout_weight="1">
 
                 <ImageView
                     android:id="@+id/home_checkIv"
@@ -93,7 +98,17 @@
                     android:adjustViewBounds="true"
                     android:scaleType="fitXY"
                     android:src="@mipmap/bg_homepage_2" />
-
+                <TextView
+                    android:id="@+id/tv_body_temperature"
+                    android:layout_width="90dp"
+                    android:layout_height="wrap_content"
+                    android:layout_above="@+id/home_checkTv"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginBottom="10dp"
+                    android:text=""
+                    android:gravity="center_horizontal"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/home_tv" />
                 <TextView
                     android:id="@+id/home_checkTv"
                     android:layout_width="wrap_content"
@@ -118,11 +133,11 @@
             </RelativeLayout>
 
             <RelativeLayout
-                android:visibility="invisible"
                 android:id="@+id/home_personRl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:visibility="invisible">
 
                 <ImageView
                     android:id="@+id/home_personIv"
@@ -156,23 +171,22 @@
             </RelativeLayout>
 
 
-
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/home_payLl"
-            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/home_gateLl"
             android:layout_weight="1"
-            android:gravity="center_horizontal">
+            android:gravity="center_horizontal"
+            android:visibility="gone">
 
             <RelativeLayout
-                android:layout_weight="1"
                 android:id="@+id/home_payRl"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
                 <ImageView
                     android:id="@+id/home_payIv"
@@ -206,11 +220,11 @@
             </RelativeLayout>
 
             <RelativeLayout
-                android:layout_weight="1"
                 android:id="@+id/home_livenessRl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@+id/home_payRl">
+                android:layout_toRightOf="@+id/home_payRl"
+                android:layout_weight="1">
 
                 <ImageView
                     android:id="@+id/home_livenessIv"
@@ -245,18 +259,19 @@
         </LinearLayout>
 
         <LinearLayout
-            android:visibility="gone"
             android:id="@+id/home_personLl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/home_payLl"
             android:layout_weight="1"
-            android:gravity="center_horizontal">
+            android:gravity="center_horizontal"
+            android:visibility="gone">
+
             <RelativeLayout
-                android:layout_weight="1"
                 android:id="@+id/home_gateRl"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
                 <ImageView
                     android:id="@+id/home_gateIv"
@@ -331,12 +346,12 @@
         </LinearLayout>
 
         <LinearLayout
-            android:visibility="gone"
-            android:gravity="center_horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@+id/home_personLl"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:visibility="gone">
 
             <RelativeLayout
                 android:id="@+id/home_attentionRl"
@@ -376,11 +391,11 @@
             </RelativeLayout>
 
             <RelativeLayout
-                android:layout_weight="1"
                 android:id="@+id/home_attributeRl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@+id/home_payRl">
+                android:layout_toRightOf="@+id/home_payRl"
+                android:layout_weight="1">
 
                 <ImageView
                     android:id="@+id/home_attributeIv"
@@ -414,12 +429,12 @@
             </RelativeLayout>
 
             <LinearLayout
-                android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@+id/home_attentionRl"
-                android:visibility="gone"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -471,7 +486,6 @@
 
     <TextView
         android:id="@+id/home_dataTv"
-        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/home_baiduTv"
@@ -479,7 +493,8 @@
         android:gravity="center"
         android:text="版本有效期至2020年12月30日"
         android:textColor="#999999"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/home_baiduTv"
@@ -496,22 +511,24 @@
         android:id="@+id/progress_group"
         android:layout_width="250dp"
         android:layout_height="100dp"
-        android:background="#50000000"
-        android:layout_centerInParent="true">
+        android:layout_centerInParent="true"
+        android:background="#50000000">
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:orientation="vertical"
-            >
+            android:orientation="vertical">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="10dp"
                 android:text="人脸库加载中"
-                android:textSize="14dp"/>
+                android:textColor="@color/white"
+                android:textSize="14dp" />
+
             <ProgressBar
                 android:id="@+id/progress_bar"
                 style="@android:style/Widget.ProgressBar.Horizontal"
@@ -520,18 +537,26 @@
                 android:layout_gravity="center_horizontal"
                 android:max="100"
                 android:progress="0"
-                android:progressDrawable="@drawable/progressbar_bg"
-                />
+                android:progressDrawable="@drawable/progressbar_bg" />
+
             <TextView
                 android:id="@+id/progress_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="12dp"
-                android:layout_marginTop="10dp"
                 android:layout_gravity="center_horizontal"
-                />
+                android:layout_marginTop="10dp"
+                android:textColor="@color/white"
+                android:textSize="12dp" />
         </LinearLayout>
 
     </RelativeLayout>
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/et_qrcode"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:cursorVisible="true"
+        android:textColor="#121212"
+        android:textCursorDrawable="@null" />
 </RelativeLayout>
