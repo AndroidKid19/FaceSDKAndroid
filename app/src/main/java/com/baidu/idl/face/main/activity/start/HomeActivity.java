@@ -4,6 +4,7 @@ package com.baidu.idl.face.main.activity.start;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -22,6 +23,8 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import com.baidu.idl.face.main.activity.BaseActivity;
 import com.baidu.idl.face.main.attribute.activity.attribute.FaceAttributeRgbActivity;
 import com.baidu.idl.face.main.attribute.utils.AttributeConfigUtils;
@@ -33,6 +36,8 @@ import com.baidu.idl.face.main.finance.activity.finance.FaceRGBFinanceActivity;
 import com.baidu.idl.face.main.finance.activity.finance.FaceRgbNirDepthFinanceActivity;
 import com.baidu.idl.face.main.finance.utils.FinanceConfigUtils;
 import com.baidu.idl.facesdkdemo.R;
+import com.baidu.idl.main.facesdk.FaceGaze;
+import com.baidu.idl.main.facesdk.FaceInfo;
 import com.baidu.idl.main.facesdk.activity.gate.FaceDepthGateActivity;
 import com.baidu.idl.main.facesdk.activity.gate.FaceNIRGateActivriy;
 import com.baidu.idl.main.facesdk.activity.gate.FaceRGBGateActivity;
@@ -41,16 +46,25 @@ import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceDepthAttendan
 import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceNIRAttendanceActivity;
 import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceRGBAttendanceActivity;
 import com.baidu.idl.main.facesdk.attendancelibrary.attendance.FaceRGBNirDepthAttendanceActivity;
+import com.baidu.idl.main.facesdk.attendancelibrary.model.LivenessModel;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.AttendanceConfigUtils;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonRootBean;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.RegisterConfigUtils;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.VisitRegisterRecordBean;
 import com.baidu.idl.main.facesdk.gazelibrary.gaze.FaceGazeActivity;
 import com.baidu.idl.main.facesdk.gazelibrary.manager.FaceSDKManager;
 import com.baidu.idl.main.facesdk.gazelibrary.utils.GazeConfigUtils;
+import com.baidu.idl.main.facesdk.identifylibrary.listener.SdkInitListener;
 import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceDepthTestimonyActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceIRTestimonyActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceRGBIRDepthTestimonyActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.testimony.FaceRGBPersonActivity;
 import com.baidu.idl.main.facesdk.identifylibrary.utils.IdentifyConfigUtils;
+import com.baidu.idl.main.facesdk.model.BDFaceDetectListConf;
+import com.baidu.idl.main.facesdk.model.BDFaceImageInstance;
+import com.baidu.idl.main.facesdk.model.BDFaceInstance;
+import com.baidu.idl.main.facesdk.model.BDFaceSDKCommon;
 import com.baidu.idl.main.facesdk.model.SingleBaseConfig;
 import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceDepthPaymentActivity;
 import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceNIRPaymentActivity;
@@ -58,24 +72,58 @@ import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceRGBPayment
 import com.baidu.idl.main.facesdk.paymentlibrary.activity.payment.FaceRgbNirDepthPaymentActivity;
 import com.baidu.idl.main.facesdk.paymentlibrary.utils.PaymentConfigUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.activity.UserManagerActivity;
+import com.baidu.idl.main.facesdk.registerlibrary.user.callback.FaceFeatureCallBack;
+import com.baidu.idl.main.facesdk.registerlibrary.user.manager.ImportFileManager;
+import com.baidu.idl.main.facesdk.registerlibrary.user.manager.ShareManager;
+import com.baidu.idl.main.facesdk.registerlibrary.user.manager.UserInfoManager;
+import com.baidu.idl.main.facesdk.registerlibrary.user.manager.VisitorFaceSDKManager;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewActivity;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewDepthActivity;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewNIRActivity;
 import com.baidu.idl.main.facesdk.registerlibrary.user.register.FaceRegisterNewRgbNirDepthActivity;
+import com.baidu.idl.main.facesdk.registerlibrary.user.utils.FileUtils;
 import com.baidu.idl.main.facesdk.utils.DensityUtils;
 import com.baidu.idl.main.facesdk.utils.GateConfigUtils;
 import com.baidu.idl.main.facesdk.utils.StreamUtil;
 import com.baidu.idl.main.facesdk.utils.ToastUtils;
 import com.baidu.idl.main.facesdk.view.PreviewTexture;
+import com.blankj.utilcode.util.CollectionUtils;
+import com.blankj.utilcode.util.FileIOUtils;
+import com.blankj.utilcode.util.ImageUtils;
+import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ObjectUtils;
+import com.blankj.utilcode.util.StringUtils;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.listener.DBLoadListener;
 import com.example.datalibrary.model.User;
+import com.google.gson.Gson;
+import com.jwsd.libzxing.OnQRCodeListener;
+import com.jwsd.libzxing.QRCodeManager;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
+//您好！您购买的人脸识别一体机，百度受权码为：QUXD-XXEX-HMDB-ESXY,  受权码对应设备受权，请注意保管。
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private Context mContext;
     private Handler mHandler = new Handler();
@@ -126,6 +174,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
         initUserManagePopupWindow();
         initDBApi();
+//        initListener();
     }
 
     private void initDBApi(){
@@ -509,13 +558,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                         FaceRgbNirDepthGataActivity.class);
                 break;
             case R.id.home_checkRl:
-                mLiveType = com.baidu.idl.main.facesdk.attendancelibrary.model.SingleBaseConfig.getBaseConfig().getType();
-                // 考勤模块
-                judgeLiveType(mLiveType,
-                        FaceRGBAttendanceActivity.class,
-                        FaceNIRAttendanceActivity.class,
-                        FaceDepthAttendanceActivity.class,
-                        FaceRGBNirDepthAttendanceActivity.class);
+                //无证认证
+//                queryVisitRegisterRecordList();
+                //访客登记步骤
+                //01 识别二维码
+
+                QRCodeManager.getInstance().with(this).setReqeustType(1).scanningQRCode(mOnQRCodeListener);
+
                 break;
             case R.id.home_payRl:
                 mLiveType = com.baidu.idl.main.facesdk.paymentlibrary.model.SingleBaseConfig.getBaseConfig().getType();
@@ -560,6 +609,206 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 startActivity(new Intent(HomeActivity.this, FaceGazeActivity.class));
                 break;
         }
+    }
+
+
+    /**
+     * @description 扫描二维码监听
+     * @date: 2020/12/7 18:57
+     * @author: Yuan
+     * @return
+     */
+    private OnQRCodeListener mOnQRCodeListener = new OnQRCodeListener() {
+        @Override
+        public void onCompleted(String result) {
+            //获取二维码解析内容
+            if (StringUtils.isEmpty(result)){
+                ToastUtils.toast(HomeActivity.this, "二维码解析错误,请检查二维码");
+                return;
+            }
+           String [] ercode = result.split("/");
+            if (ObjectUtils.isEmpty(ercode) || ercode.length < 5){
+                ToastUtils.toast(HomeActivity.this, "二维码解析错误,请检查二维码");
+                return;
+            }
+
+            LogUtils.json(ercode);
+
+            SharedPreferences sharedPreferences = HomeActivity.this.getSharedPreferences("type", MODE_PRIVATE);
+            mLiveType = sharedPreferences.getInt("type", 0);
+            com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager.getInstance().setActiveLog();
+//            judgeLiveType(mLiveType, FaceRegisterNewActivity.class, FaceRegisterNewNIRActivity.class,
+//                    FaceRegisterNewDepthActivity.class, FaceRegisterNewRgbNirDepthActivity.class);
+
+            Intent intent = new Intent(HomeActivity.this,FaceRegisterNewActivity.class);
+            intent.putExtra("result",result);
+            startActivity(intent);
+
+        }
+
+        @Override
+        public void onError(Throwable errorMsg) {
+            ToastUtils.toast(HomeActivity.this, "二维码解析错误,请检查二维码");
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+    };
+
+
+    /**
+     * 查询已预约人员
+     * */
+    public void queryVisitRegisterRecordList(){
+        //清空人脸库
+        FaceApi.getInstance().userClean();
+        //定义预约用户查询接口URL
+        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/queryVisitRegisterRecordList";
+        OkHttpClient client = new OkHttpClient();
+        Map<String,String> paramsMap = new HashMap<>();
+        //查询未到访的
+        paramsMap.put("visitStatus","0");
+        Gson gson = new Gson();
+        /**
+         * 创建请求的参数body
+         */
+        RequestBody body = FormBody.create(MediaType.parse("application/json"), gson.toJson(paramsMap));
+        Request request = new Request.Builder()
+                .header("User-Agent", "OkHttp Example")
+                .url(hostUrl)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                //验证通过
+                if (response.isSuccessful()){
+                    Log.i("onResponse","isSuccessful");
+                    String result = response.body().string();
+                    JsonRootBean newsBeanList = JsonUtils.deserialize(result, JsonRootBean.class);
+                    if (CollectionUtils.isNotEmpty(newsBeanList.getData().getList())){
+                        //用户列表
+                        getFeatures(newsBeanList.getData().getList());
+                    }
+                }else{
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i("onResponse","-------------------------------");
+                //...
+            }
+
+        });
+    }
+
+
+
+
+    /**
+     * 提取特征值
+     *
+     */
+    private void getFeatures(List<VisitRegisterRecordBean> list) {
+        LogUtils.json(list);
+        //循环遍历抽取特征
+        for (VisitRegisterRecordBean visitRegisterRecordBean : list) {
+            //获取头像转为文件
+            File file = getFileByUrl(visitRegisterRecordBean.getPersonalPhotos());
+            //获取文件名称
+            String suffix = file.getName().substring(file.getName().lastIndexOf(".") + 1);
+            //文件转bitmap 抽取特征
+            Bitmap mCropBitmap = ImageUtils.getBitmap(file);
+            LogUtils.i(visitRegisterRecordBean.getName());
+            // 开始导入
+            VisitorFaceSDKManager.getInstance().asyncImport(mCropBitmap,visitRegisterRecordBean.getName(),visitRegisterRecordBean.getCertificateNumber()+"."+suffix);
+        }
+
+
+        //导入人脸成功
+        mLiveType = com.baidu.idl.main.facesdk.attendancelibrary.model.SingleBaseConfig.getBaseConfig().getType();
+        // 考勤模块
+        judgeLiveType(mLiveType,
+                FaceRGBAttendanceActivity.class,
+                FaceNIRAttendanceActivity.class,
+                FaceDepthAttendanceActivity.class,
+                FaceRGBNirDepthAttendanceActivity.class);
+
+
+    }
+
+    private void initListener() {
+        if (com.baidu.idl.main.facesdk.identifylibrary.manager.FaceSDKManager.initStatus != com.baidu.idl.main.facesdk.identifylibrary.manager.FaceSDKManager.SDK_MODEL_LOAD_SUCCESS) {
+            com.baidu.idl.main.facesdk.identifylibrary.manager.FaceSDKManager.getInstance().initModel(this, new SdkInitListener() {
+                @Override
+                public void initStart() {
+                }
+
+                @Override
+                public void initLicenseSuccess() {
+                }
+
+                @Override
+                public void initLicenseFail(int errorCode, String msg) {
+                }
+
+                @Override
+                public void initModelSuccess() {
+                    com.baidu.idl.main.facesdk.identifylibrary.manager.FaceSDKManager.initModelSuccess = true;
+                    com.baidu.idl.main.facesdk.identifylibrary.utils.ToastUtils.toast(HomeActivity.this, "模型加载成功，欢迎使用");
+                }
+
+                @Override
+                public void initModelFail(int errorCode, String msg) {
+                    com.baidu.idl.main.facesdk.identifylibrary.manager.FaceSDKManager.initModelSuccess = false;
+                    if (errorCode != -12) {
+                        com.baidu.idl.main.facesdk.identifylibrary.utils.ToastUtils.toast(HomeActivity.this, "模型加载失败，请尝试重启应用");
+                    }
+                }
+            });
+        }
+    }
+
+
+    //url转file
+    private File getFileByUrl(String fileUrl) {
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        BufferedOutputStream stream = null;
+        InputStream inputStream = null;
+        File file = null;
+        try {
+            URL imageUrl = new URL(fileUrl);
+            HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+            inputStream = conn.getInputStream();
+            byte[] buffer = new byte[1024];
+            int len = 0;
+            while ((len = inputStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, len);
+            }
+            file = File.createTempFile("file", fileUrl.substring(fileUrl.lastIndexOf("."), fileUrl.length()));
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            stream = new BufferedOutputStream(fileOutputStream);
+            stream.write(outStream.toByteArray());
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (stream != null) {
+                    stream.close();
+                }
+                outStream.close();
+            } catch (Exception e) {
+            }
+        }
+        return file;
     }
 
 
@@ -616,5 +865,11 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 startActivity(new Intent(HomeActivity.this, depthCls));
                 break;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        QRCodeManager.getInstance().with(this).onActivityResult(requestCode, resultCode, data);
     }
 }

@@ -29,22 +29,48 @@ import com.baidu.idl.main.facesdk.registerlibrary.user.camera.CameraPreviewManag
 import com.baidu.idl.main.facesdk.registerlibrary.user.listener.SdkInitListener;
 import com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceSDKManager;
 import com.baidu.idl.main.facesdk.registerlibrary.user.manager.FaceTrackManager;
+import com.baidu.idl.main.facesdk.registerlibrary.user.model.LivenessModel;
 import com.baidu.idl.main.facesdk.registerlibrary.user.model.SingleBaseConfig;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.BitmapUtils;
+import com.baidu.idl.main.facesdk.registerlibrary.user.utils.CreateJsonRootBean;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.DensityUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.FaceOnDrawTexturViewUtil;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.FileUtils;
+import com.baidu.idl.main.facesdk.registerlibrary.user.utils.JsonRootBean;
+import com.baidu.idl.main.facesdk.registerlibrary.user.utils.JsonUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.KeyboardsUtils;
 import com.baidu.idl.main.facesdk.registerlibrary.user.utils.ToastUtils;
+import com.baidu.idl.main.facesdk.registerlibrary.user.utils.TtsManager;
 import com.baidu.idl.main.facesdk.registerlibrary.user.view.CircleImageView;
 import com.baidu.idl.main.facesdk.registerlibrary.user.view.FaceRoundProView;
-import com.baidu.idl.main.facesdk.registerlibrary.user.model.LivenessModel;
+import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ObjectUtils;
+import com.blankj.utilcode.util.StringUtils;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.model.User;
+import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import createbest.sdk.bihu.temperature.ITemperature;
+import createbest.sdk.bihu.temperature.Temperature_RB32x3290A;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * 新人脸注册页面
@@ -79,12 +105,26 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     private Bitmap mCropBitmap;
     private boolean mCollectSuccess = false;
 
+
+    private TextView text_collect;
+    private TextView text_card;
+    private TextView text_organ;
+    private TextView tv_body_temperature;
+
+    /**
+     * 测温
+     * */
+    private ITemperature temperature;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initListener();
         setContentView(R.layout.activity_new_registerlibrary);
         initView();
+        //在应用启动时初始化一次
+        TtsManager.getInstance(this).init();
+        initTemperature();
     }
 
     private void initListener() {
@@ -116,6 +156,44 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             });
         }
     }
+
+
+    /**
+     * 测温头初始化
+     * */
+    private void initTemperature() {
+        temperature = Temperature_RB32x3290A.getInstance();
+        temperature.setReader(new ITemperature.Reader() {
+            @Override
+            public void onGetTemperature(final float temp, final boolean jarless) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String temperature = new DecimalFormat("00.00").format(temp);
+                        if (jarless) {
+                            if (temp < 36) {
+                                tv_body_temperature.setText(temperature+"℃");
+                                tv_body_temperature.setBackgroundColor(Color.GREEN);
+                            } else if (temp > 37.3) {
+//                                myTTS.speak("体温异常");
+                                com.Tool.TtsManager.getInstance(FaceRegisterNewActivity.this).speakText("体温异常");
+                                tv_body_temperature.setText(temperature+"℃");
+                                tv_body_temperature.setBackgroundColor(Color.RED);
+                            } else {
+                                tv_body_temperature.setText(temperature+"℃");
+                                tv_body_temperature.setBackgroundColor(Color.GREEN);
+                            }
+                        } else {
+                            tv_body_temperature.setText(temperature+"℃");
+                            tv_body_temperature.setBackgroundColor(Color.GREEN);
+                        }
+                    }
+                });
+            }
+        });
+        temperature.open("/dev/ttyS4");
+    }
+
 
     private void initView() {
         mAutoTexturePreviewView = findViewById(R.id.auto_camera_preview_view);
@@ -177,7 +255,31 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
             }
         });
+
+        text_collect = findViewById(R.id.text_collect);
+
+        text_card = findViewById(R.id.text_card);
+        text_organ = findViewById(R.id.text_organ);
+        tv_body_temperature = findViewById(R.id.tv_body_temperature);
+        //初始化访客信息
+        initVisitorData();
     }
+
+
+    private void initVisitorData() {
+        if (getIntent().getStringExtra("result") != null) {
+            String[] ercode = getIntent().getStringExtra("result").split("/");
+            if (ObjectUtils.isEmpty(ercode) || ercode.length < 5) {
+                ToastUtils.toast(FaceRegisterNewActivity.this, "二维码解析错误,请检查二维码");
+                return;
+            }
+            text_collect.setText(ercode[0]);
+            text_card.setText(ercode[1]);
+            text_organ.setText(ercode[4]);
+            LogUtils.json(ercode);
+        }
+    }
+
 
     @Override
     protected void onResume() {
@@ -198,6 +300,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             }
             mCropBitmap = null;
         }
+        TtsManager.getInstance(this).destory();
     }
 
     /**
@@ -205,9 +308,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
      */
     private void startCameraPreview() {
         // 设置前置摄像头
-        if (SingleBaseConfig.getBaseConfig().getRBGCameraId() != -1){
+        if (SingleBaseConfig.getBaseConfig().getRBGCameraId() != -1) {
             CameraPreviewManager.getInstance().setCameraFacing(SingleBaseConfig.getBaseConfig().getRBGCameraId());
-        }else {
+        } else {
             CameraPreviewManager.getInstance().setCameraFacing(CameraPreviewManager.CAMERA_FACING_FRONT);
         }
         // 设置后置摄像头
@@ -262,12 +365,12 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                         if (mFaceRoundProView == null) {
                             return;
                         }
-                        if (code == 0){
+                        if (code == 0) {
                             mFaceRoundProView.setTipText("请保持面部在取景框内");
-                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
-                        }else {
+                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
+                        } else {
                             mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                         }
                     }
                 });
@@ -296,14 +399,14 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
                 if (livenessModel == null || livenessModel.getFaceInfo() == null) {
                     mFaceRoundProView.setTipText("请保持面部在取景框内");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
                     return;
                 }
-                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
+                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
 
-                if (livenessModel.getFaceSize() > 1){
+                if (livenessModel.getFaceSize() > 1) {
                     mFaceRoundProView.setTipText("请保证取景框内只有一个人脸");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     return;
                 }
 
@@ -331,7 +434,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
                 if (mPointXY[2] < 50 || mPointXY[3] < 50) {
                     mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     // 释放内存
                     destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                     return;
@@ -339,7 +442,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
 
                 if (mPointXY[2] > previewWidth || mPointXY[3] > previewWidth) {
                     mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     // 释放内存
                     destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                     return;
@@ -350,7 +453,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                         || mPointXY[1] - mPointXY[3] / 2 < topLimitY
                         || mPointXY[1] + mPointXY[3] / 2 > bottomLimitY) {
                     mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                    mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                     // 释放内存
                     destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                     return;
@@ -383,9 +486,9 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
         int liveType = SingleBaseConfig.getBaseConfig().getType();
         // int liveType = 2;
 
-        if (! livenessModel.isQualityCheck()){
+        if (!livenessModel.isQualityCheck()) {
             mFaceRoundProView.setTipText("请保证人脸区域清晰无遮挡");
-            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
             return;
         } else if (liveType == 0) {         // 无活体
             getFeatures(livenessModel);
@@ -395,7 +498,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             // Log.e(TAG, "score = " + rgbLivenessScore);
             if (rgbLivenessScore < liveThreadHold) {
                 mFaceRoundProView.setTipText("请保证采集对象为真人");
-                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                 // 释放内存
                 destroyImageInstance(livenessModel.getBdFaceImageInstanceCrop());
                 return;
@@ -443,7 +546,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     private void displayCompareResult(float ret, byte[] faceFeature, LivenessModel model) {
         if (model == null) {
             mFaceRoundProView.setTipText("请保持面部在取景框内");
-            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey , false);
+            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_grey, false);
             return;
         }
 
@@ -457,7 +560,7 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
                             2.0f, false, isOutoBoundary);
             if (cropInstance == null) {
                 mFaceRoundProView.setTipText("抠图失败");
-                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+                mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
                 // 释放内存
                 destroyImageInstance(model.getBdFaceImageInstanceCrop());
                 return;
@@ -467,6 +570,10 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             if (mCropBitmap != null) {
                 mCollectSuccess = true;
                 mCircleHead.setImageBitmap(mCropBitmap);
+
+                //上传头像
+                uploadHeadFile(fileFromBitmap(mCropBitmap));
+
             }
             cropInstance.destory();
             // 释放内存
@@ -481,8 +588,178 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
             }
         } else {
             mFaceRoundProView.setTipText("特征提取失败");
-            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue , true);
+            mFaceRoundProView.setBitmapSource(R.mipmap.ic_loading_blue, true);
         }
+    }
+
+    /**
+     * 上传头像
+     */
+    private void uploadHeadFile(File fileFromBitmap) {
+        //定义预约用户查询接口URL
+        String hostUrl = "http://8.141.167.159:8990/organ/fileUpload/upload";
+        OkHttpClient client = new OkHttpClient();
+        /**
+         * 创建请求的参数body
+         */
+        RequestBody requestBody = FormBody.create(MediaType.parse("image/png"), fileFromBitmap);
+        //设置上传文件的内容
+        RequestBody body = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("files", fileFromBitmap.getName(), requestBody)
+                .build();
+        Request request = new Request.Builder()
+                .header("User-Agent", "OkHttp Example")
+                .url(hostUrl)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                //验证通过
+                if (response.isSuccessful()) {
+                    Log.i("onResponse", "isSuccessful");
+                    String result = response.body().string();
+                    JsonRootBean jsonRootBean = JsonUtils.deserialize(result, JsonRootBean.class);
+                    LogUtils.json(jsonRootBean);
+                    if (!StringUtils.isEmpty(jsonRootBean.getData().getFileList().get(0).getUrl())) {
+                        createVisitRegisterRecord(jsonRootBean.getData().getFileList().get(0).getUrl());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i("onResponse", "-------------------------------");
+                //...
+            }
+
+        });
+
+    }
+
+    /**
+     * 提交预约人员
+     */
+    public void createVisitRegisterRecord(String coverPictureUrl) {
+        final String[] ercode = getIntent().getStringExtra("result").split("/");
+        //定义提交预约人员接口URL
+        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/createVisitRegisterRecord";
+        OkHttpClient client = new OkHttpClient();
+        Map<String, String> paramsMap = new HashMap<>();
+        paramsMap.put("name", ercode[0]);
+        paramsMap.put("certificateNumber", ercode[1]);
+        paramsMap.put("cellPhone", ercode[2]);
+        paramsMap.put("visitTime", ercode[3]);
+        paramsMap.put("orgId", ercode[5]);
+        paramsMap.put("coverPictureUrl", coverPictureUrl);
+        Gson gson = new Gson();
+        /**
+         * 创建请求的参数body
+         */
+        RequestBody body = FormBody.create(MediaType.parse("application/json"), gson.toJson(paramsMap));
+        Request request = new Request.Builder()
+                .header("User-Agent", "OkHttp Example")
+                .url(hostUrl)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                //验证通过
+                if (response.isSuccessful()) {
+                    Log.i("onResponse", "isSuccessful");
+                    String result = response.body().string();
+                    CreateJsonRootBean newsBeanList = JsonUtils.deserialize(result, CreateJsonRootBean.class);
+                    if (newsBeanList.getRespCode().equals("0000")) {
+                        //提交成功
+                        TtsManager.getInstance(FaceRegisterNewActivity.this).speakText("登记成功,当前体温"+tv_body_temperature.getText().toString());
+                        updateByCertificateNumber(ercode[1]);
+                    }
+                } else {
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i("onResponse", "-------------------------------");
+                //...
+            }
+
+        });
+    }
+
+    /**
+     * 根据身份证号 校验是否预约
+     *  certificateNumber; 证件号码
+     * visitStatus 到访状态；0未到访；1已到访
+     * */
+    public void updateByCertificateNumber(String cardNumber){
+        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/updateByCertificateNumber";
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
+
+        RequestBody formBody = new FormBody.Builder()
+                .add("certificateNumber",cardNumber)
+                .add("visitStatus","1")
+                .build();
+
+        Map<String,String> paramsMap = new HashMap<>();
+        paramsMap.put("certificateNumber",cardNumber);
+        paramsMap.put("visitStatus","1");
+        Gson gson = new Gson();
+        /**
+         * 创建请求的参数body
+         */
+        RequestBody body = FormBody.create(MediaType.parse("application/json"), gson.toJson(paramsMap));
+        Request request = new Request.Builder()
+                .header("User-Agent", "OkHttp Example")
+                .url(hostUrl)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call,Response response) throws IOException {
+                //验证通过
+                if (response.isSuccessful()){
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i("onResponse","-------------------------------");
+                //...
+            }
+
+        });
+    }
+
+
+    private File fileFromBitmap(Bitmap mCropBitmap) {
+        //create a file to write bitmap data
+        File f = new File(FaceRegisterNewActivity.this.getCacheDir(), "temporary_file.png");
+        try {
+            f.createNewFile();
+            //Convert bitmap to byte array
+            Bitmap bitmap = mCropBitmap;
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+            byte[] bitmapdata = bos.toByteArray();
+
+            //write the bytes in file
+            FileOutputStream fos = new FileOutputStream(f);
+            fos.write(bitmapdata);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return f;
     }
 
     /**

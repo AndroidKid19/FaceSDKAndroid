@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/relative_collect_success"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -15,27 +16,133 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="73dp">
+        android:layout_marginTop="75dp">
 
-        <com.baidu.idl.main.facesdk.registerlibrary.user.view.CircleImageView
-            android:id="@+id/circle_head"
-            android:layout_width="108dp"
-            android:layout_height="108dp"
-            android:layout_centerHorizontal="true"/>
+       <androidx.appcompat.widget.LinearLayoutCompat
+           android:layout_centerHorizontal="true"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:orientation="vertical"
+           android:gravity="center_horizontal"
+           >
+           <com.baidu.idl.main.facesdk.registerlibrary.user.view.CircleImageView
+               android:id="@+id/circle_head"
+               android:layout_width="150dp"
+               android:layout_height="150dp"
+               android:layout_centerHorizontal="true"/>
+          <androidx.appcompat.widget.LinearLayoutCompat
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="22dp"
+              android:orientation="horizontal"
+              >
+              <TextView
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"
+                  android:layout_below="@id/circle_head"
+                  android:textSize="16sp"
+                  android:gravity="right"
+                  android:textColor="#999999"
+                  android:text="访客姓名："/>
+              <TextView
+                  android:id="@+id/text_collect"
+                  android:layout_weight="1"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_below="@id/circle_head"
+                  android:textSize="16sp"
+                  android:textColor="#999999"
+                  tools:text=""/>
+          </androidx.appcompat.widget.LinearLayoutCompat>
 
-        <TextView
-            android:id="@+id/text_collect"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/circle_head"
-            android:layout_marginTop="22dp"
-            android:layout_centerHorizontal="true"
-            android:textSize="16sp"
-            android:textColor="#999999"
-            android:text="请输入用户名"/>
+           <androidx.appcompat.widget.LinearLayoutCompat
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:layout_marginTop="22dp"
+               android:orientation="horizontal"
+               >
+               <TextView
+                   android:layout_width="0dp"
+                   android:layout_height="wrap_content"
+                   android:layout_weight="1"
+                   android:layout_below="@id/circle_head"
+                   android:textSize="16sp"
+                   android:gravity="right"
+                   android:textColor="#999999"
+                   android:text="访客身份证："/>
+               <TextView
+                   android:id="@+id/text_card"
+                   android:layout_weight="1"
+                   android:layout_width="0dp"
+                   android:layout_height="wrap_content"
+                   android:layout_below="@id/circle_head"
+                   android:textSize="16sp"
+                   android:textColor="#999999"
+                   tools:text=""/>
+           </androidx.appcompat.widget.LinearLayoutCompat>
+           <androidx.appcompat.widget.LinearLayoutCompat
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:layout_marginTop="22dp"
+               android:orientation="horizontal"
+               >
+               <TextView
+                   android:layout_width="0dp"
+                   android:layout_height="wrap_content"
+                   android:layout_weight="1"
+                   android:layout_below="@id/circle_head"
+                   android:textSize="16sp"
+                   android:gravity="right"
+                   android:textColor="#999999"
+                   android:text="到访单位："/>
+               <TextView
+                   android:id="@+id/text_organ"
+                   android:layout_weight="1"
+                   android:layout_width="0dp"
+                   android:layout_height="wrap_content"
+                   android:layout_below="@id/circle_head"
+                   android:textSize="16sp"
+                   android:textColor="#999999"
+                   tools:text=""/>
+           </androidx.appcompat.widget.LinearLayoutCompat>
+
+           <androidx.appcompat.widget.LinearLayoutCompat
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:layout_marginTop="22dp"
+               android:orientation="horizontal"
+               >
+               <TextView
+                   android:layout_width="0dp"
+                   android:layout_height="wrap_content"
+                   android:layout_weight="1"
+                   android:layout_below="@id/circle_head"
+                   android:textSize="16sp"
+                   android:gravity="right"
+                   android:textColor="#999999"
+                   android:text="当前体温："/>
+              <androidx.appcompat.widget.LinearLayoutCompat
+                  android:layout_width="0dp"
+                  android:layout_weight="1"
+                  android:layout_height="wrap_content">
+                  <TextView
+                      android:id="@+id/tv_body_temperature"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text=""
+                      android:textColor="#FFFFFFFF"
+                      android:textSize="25sp"
+                      android:visibility="visible"
+                      />
+              </androidx.appcompat.widget.LinearLayoutCompat>
+           </androidx.appcompat.widget.LinearLayoutCompat>
+
+       </androidx.appcompat.widget.LinearLayoutCompat>
 
         <RelativeLayout
             android:id="@+id/relative_input"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/text_collect"
@@ -81,6 +188,7 @@
             android:visibility="invisible"/>
 
         <Button
+            android:visibility="gone"
             android:id="@+id/btn_collect_confirm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,7 +206,7 @@
             android:gravity="center"/>
     </RelativeLayout>
 
-    <!--百度大脑技术支持-->
+    <!--明杰数字技术支持-->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

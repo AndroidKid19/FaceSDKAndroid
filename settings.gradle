@@ -13,4 +13,5 @@ include ':identifylibrary'
 include ':datalibrary'
 include ':dkcloud'
 include ':bihu'
+include ':libzxing'
 

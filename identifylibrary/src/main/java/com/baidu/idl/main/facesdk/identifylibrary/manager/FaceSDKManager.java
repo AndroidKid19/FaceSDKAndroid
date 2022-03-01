@@ -1220,7 +1220,7 @@ if (failNumber >= 2) {
         bdFaceDetectListConfig.usingDetect = true;
 
         FaceInfo[] faceInfos = faceDetectPerson.detect(BDFaceSDKCommon.DetectType.DETECT_VIS,
-                BDFaceSDKCommon.AlignType.BDFACE_ALIGN_TYPE_RGB_ACCURATE,
+                BDFaceSDKCommon.AlignType.BDFACE_ALIGN_TYPE_RGB_FAST,
                 rgbInstance,
                 null, bdFaceDetectListConfig);
 

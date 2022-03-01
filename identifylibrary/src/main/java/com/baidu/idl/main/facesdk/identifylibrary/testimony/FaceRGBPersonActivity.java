@@ -233,7 +233,7 @@ public class FaceRGBPersonActivity extends BaseActivity implements View.OnClickL
         mRgbLiveScore = SingleBaseConfig.getBaseConfig().getRgbLiveScore();
         // buttom
         personButtomLl = findViewById(R.id.person_buttomLl);
-        // 百度大脑技术支持
+        // 明杰数字技术支持
         person_baiduTv = findViewById(R.id.person_baiduTv);
         // 送检RGB 图像回显
         testImageview = findViewById(R.id.test_rgb_view);
@@ -340,7 +340,7 @@ public class FaceRGBPersonActivity extends BaseActivity implements View.OnClickL
             testimony_previewLineIv.setVisibility(View.GONE);
             testimony_developmentTv.setTextColor(getResources().getColor(R.color.white));
             testimony_previewTv.setTextColor(Color.parseColor("#FF999999"));
-            // 百度大脑技术支持隐藏
+            // 明杰数字技术支持隐藏
             person_baiduTv.setVisibility(View.GONE);
             // 预览模式显示buttom隐藏
             personButtomLl.setVisibility(View.GONE);
@@ -366,7 +366,7 @@ public class FaceRGBPersonActivity extends BaseActivity implements View.OnClickL
             testimony_previewLineIv.setVisibility(View.VISIBLE);
             testimony_developmentTv.setTextColor(Color.parseColor("#FF999999"));
             testimony_previewTv.setTextColor(getResources().getColor(R.color.white));
-            // 百度大脑技术支持显示
+            // 明杰数字技术支持显示
             person_baiduTv.setVisibility(View.VISIBLE);
             // RGB 检测图片测试
             testRelativeLayout.setVisibility(View.GONE);

@@ -17,7 +17,7 @@
         android:layout_marginBottom="15dp"
         android:alpha="0.4"
         android:gravity="center_horizontal"
-        android:text="— 百度大脑技术支持 —"
+        android:text="— 明杰数字技术支持 —"
         android:textColor="#666666"
         android:textSize="@dimen/finance_12_sp" />
 </RelativeLayout>

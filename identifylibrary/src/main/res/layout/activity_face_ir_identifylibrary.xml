@@ -23,7 +23,7 @@
         android:layout_height="match_parent" />
 
     <include
-        android:visibility="gone"
+        android:visibility="visible"
         android:id="@+id/liveness_title"
         layout="@layout/layout_title_testimony" />
 

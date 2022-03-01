@@ -41,14 +41,31 @@ import com.baidu.idl.main.facesdk.attendancelibrary.utils.BitmapUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.DensityUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.FaceOnDrawTexturViewUtil;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.FileUtils;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonRootBean;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.TimeUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.ToastUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.view.PreviewTexture;
 import com.baidu.idl.main.facesdk.model.BDFaceImageInstance;
 import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.model.User;
+import com.google.gson.Gson;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 
 public class FaceNIRAttendanceActivity extends BaseActivity implements View.OnClickListener {
@@ -156,7 +173,11 @@ public class FaceNIRAttendanceActivity extends BaseActivity implements View.OnCl
             params.gravity = Gravity.CENTER;
             relativeLayout.setLayoutParams(params);
         }
+
     }
+
+
+
 
     private void initListener() {
         if (FaceSDKManager.initStatus != FaceSDKManager.SDK_MODEL_LOAD_SUCCESS) {

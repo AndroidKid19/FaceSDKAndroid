@@ -97,6 +97,19 @@ import static com.DKCloudID.ClientDispatcher.SAM_V_FRAME_START_CODE;
 import static com.DKCloudID.ClientDispatcher.SAM_V_INIT_COM;
 
 public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClickListener {
+    /**
+     * 参数设置
+     * 最小人脸检测 -30
+     * 人脸置信度   -0.5
+     *  活体检测
+     *  RGB -0.5
+     *  NIR -0.2
+     *
+     *  人脸识别
+     *  RGB 识别
+     *
+     *  RGB 阈值 -0.6
+     * */
     private static final int PICK_PHOTO_FRIST = 100;
     private static final int PICK_VIDEO_FRIST = 101;
 
@@ -763,6 +776,7 @@ public class FaceIRTestimonyActivity extends BaseActivity implements View.OnClic
         if (serialManager != null) {
             serialManager.close();
         }
+        TtsManager.getInstance(this).destory();
     }
 
     @Override

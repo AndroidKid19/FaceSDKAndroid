@@ -13,6 +13,7 @@ import android.graphics.RectF;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.TextureView;
 import android.view.View;
@@ -21,11 +22,10 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.Tool.TtsManager;
 import com.baidu.idl.main.facesdk.FaceInfo;
 import com.baidu.idl.main.facesdk.attendancelibrary.BaseActivity;
 import com.baidu.idl.main.facesdk.attendancelibrary.R;
-import com.example.datalibrary.api.FaceApi;
 import com.baidu.idl.main.facesdk.attendancelibrary.callback.CameraDataCallback;
 import com.baidu.idl.main.facesdk.attendancelibrary.callback.FaceDetectCallBack;
 import com.baidu.idl.main.facesdk.attendancelibrary.camera.AutoTexturePreviewView;
@@ -40,14 +40,43 @@ import com.baidu.idl.main.facesdk.attendancelibrary.utils.BitmapUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.DensityUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.FaceOnDrawTexturViewUtil;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.FileUtils;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonRootBean;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.JsonUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.TimeUtils;
 import com.baidu.idl.main.facesdk.attendancelibrary.utils.ToastUtils;
+import com.baidu.idl.main.facesdk.attendancelibrary.utils.VisitRegisterRecordBean;
 import com.baidu.idl.main.facesdk.attendancelibrary.view.CircleImageView;
 import com.baidu.idl.main.facesdk.model.BDFaceImageInstance;
+import com.baidu.idl.main.facesdk.registerlibrary.user.manager.VisitorFaceSDKManager;
+import com.blankj.utilcode.util.CollectionUtils;
+import com.blankj.utilcode.util.ImageUtils;
+import com.example.datalibrary.api.FaceApi;
 import com.example.datalibrary.model.User;
-
+import com.google.gson.Gson;
+import org.jetbrains.annotations.NotNull;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.Date;
-
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import createbest.sdk.bihu.temperature.ITemperature;
+import createbest.sdk.bihu.temperature.Temperature_RB32x3290A;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnClickListener {
 
@@ -98,6 +127,12 @@ public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnCl
     private View saveCamera;
     private boolean isSaveImage;
     private View spot;
+    private TextView tv_body_temperature;
+
+    /**
+     * 测温
+     * */
+    private ITemperature temperature;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,7 +158,204 @@ public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnCl
             params.gravity = Gravity.CENTER;
             relativeLayout.setLayoutParams(params);
         }
+
+        initTemperature();
+        //在应用启动时初始化一次
+        TtsManager.getInstance(this).init();
+        //初始化注册人脸识别库
+//        queryVisitRegisterRecordList();
+//        initListener();
     }
+
+    /**
+     * 测温头初始化
+     * */
+    private void initTemperature() {
+        temperature = Temperature_RB32x3290A.getInstance();
+        temperature.setReader(new ITemperature.Reader() {
+            @Override
+            public void onGetTemperature(final float temp, final boolean jarless) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String temperature = new DecimalFormat("00.00").format(temp);
+                        if (jarless) {
+                            if (temp < 36) {
+                                tv_body_temperature.setText(temperature+"℃");
+                                tv_body_temperature.setBackgroundColor(Color.GREEN);
+                            } else if (temp > 37.3) {
+//                                myTTS.speak("体温异常");
+                                TtsManager.getInstance(FaceRGBAttendanceActivity.this).speakText("体温异常");
+                                tv_body_temperature.setText(temperature+"℃");
+                                tv_body_temperature.setBackgroundColor(Color.RED);
+                            } else {
+                                tv_body_temperature.setText(temperature+"℃");
+                                tv_body_temperature.setBackgroundColor(Color.GREEN);
+                            }
+                        } else {
+                            tv_body_temperature.setText(temperature+"℃");
+                            tv_body_temperature.setBackgroundColor(Color.GREEN);
+                        }
+                    }
+                });
+            }
+        });
+        temperature.open("/dev/ttyS4");
+    }
+
+    /**
+     * 根据身份证号 校验是否预约
+     *  certificateNumber; 证件号码
+     * visitStatus 到访状态；0未到访；1已到访
+     * */
+    public void updateByCertificateNumber(String cardNumber){
+        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/updateByCertificateNumber";
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
+
+        RequestBody formBody = new FormBody.Builder()
+                .add("certificateNumber",cardNumber)
+                .add("visitStatus","1")
+                .build();
+
+        Map<String,String> paramsMap = new HashMap<>();
+        paramsMap.put("certificateNumber",cardNumber);
+        paramsMap.put("visitStatus","1");
+        Gson gson = new Gson();
+        /**
+         * 创建请求的参数body
+         */
+        RequestBody body = FormBody.create(MediaType.parse("application/json"), gson.toJson(paramsMap));
+        Request request = new Request.Builder()
+                .header("User-Agent", "OkHttp Example")
+                .url(hostUrl)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                //验证通过
+                if (response.isSuccessful()){
+                    Log.i("onResponse","isSuccessful");
+                    String result = response.body().string();
+                    JsonRootBean newsBeanList = JsonUtils.deserialize(result, JsonRootBean.class);
+                    //处理UI需要切换到UI线程处理
+                    Log.i("onResponse",result);
+                }else{
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i("onResponse","-------------------------------");
+                //...
+            }
+
+        });
+    }
+
+
+
+    /**
+     * 查询已预约人员
+     * */
+    public void queryVisitRegisterRecordList(){
+//        FaceApi.getInstance().userClean();
+        String hostUrl = "http://8.141.167.159:8990/organ/visitRegisterRecord/queryVisitRegisterRecordList";
+        OkHttpClient client = new OkHttpClient();
+        Map<String,String> paramsMap = new HashMap<>();
+        paramsMap.put("visitStatus","0");
+        Gson gson = new Gson();
+        /**
+         * 创建请求的参数body
+         */
+        RequestBody body = FormBody.create(MediaType.parse("application/json"), gson.toJson(paramsMap));
+        Request request = new Request.Builder()
+                .header("User-Agent", "OkHttp Example")
+                .url(hostUrl)
+                .post(body)
+                .build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                //验证通过
+                if (response.isSuccessful()){
+                    Log.i("onResponse","isSuccessful");
+                    String result = response.body().string();
+                    JsonRootBean newsBeanList = JsonUtils.deserialize(result, JsonRootBean.class);
+                    if (CollectionUtils.isNotEmpty(newsBeanList.getData().getList())){
+                        getFeatures(newsBeanList.getData().getList());
+                    }
+                }else{
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.i("onResponse","-------------------------------");
+                //...
+            }
+
+        });
+    }
+
+
+
+    /**
+     * 提取特征值
+     *
+     */
+    private void getFeatures(List<VisitRegisterRecordBean> list) {
+        for (VisitRegisterRecordBean visitRegisterRecordBean : list) {
+            Bitmap mCropBitmap = ImageUtils.getBitmap(getFileByUrl(visitRegisterRecordBean.getPersonalPhotos()));
+            // 开始导入
+            VisitorFaceSDKManager.getInstance().asyncImport(mCropBitmap,visitRegisterRecordBean.getName(),visitRegisterRecordBean.getCertificateNumber()+".jpg");
+        }
+
+        //人脸库加载
+        FaceSDKManager.getInstance().initDataBases(this);
+    }
+
+    //url转file
+    private File getFileByUrl(String fileUrl) {
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        BufferedOutputStream stream = null;
+        InputStream inputStream = null;
+        File file = null;
+        try {
+            URL imageUrl = new URL(fileUrl);
+            HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+            inputStream = conn.getInputStream();
+            byte[] buffer = new byte[1024];
+            int len = 0;
+            while ((len = inputStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, len);
+            }
+            file = File.createTempFile("file", fileUrl.substring(fileUrl.lastIndexOf("."), fileUrl.length()));
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            stream = new BufferedOutputStream(fileOutputStream);
+            stream.write(outStream.toByteArray());
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (stream != null) {
+                    stream.close();
+                }
+                outStream.close();
+            } catch (Exception e) {
+            }
+        }
+        return file;
+    }
+
 
     private void initListener() {
         if (FaceSDKManager.initStatus != FaceSDKManager.SDK_MODEL_LOAD_SUCCESS) {
@@ -188,6 +420,9 @@ public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnCl
         preText.setTextColor(Color.parseColor("#ffffff"));
         preViewRelativeLayout = findViewById(R.id.yvlan_relativeLayout);
         previewView = findViewById(R.id.preview_view);
+
+        //当前体温
+        tv_body_temperature = findViewById(R.id.tv_body_temperature);
 
         // 开发模式
         deveLop = findViewById(R.id.develop_text);
@@ -318,7 +553,7 @@ public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnCl
                         userNameLayout.setVisibility(View.VISIBLE);
                         nameImage.setImageResource(R.mipmap.ic_tips_gate_fail);
                         nameText.setTextColor(Color.parseColor("#fec133"));
-                        nameText.setText("考勤失败");
+                        nameText.setText("验证失败");
                         attendanceTimeText.setText("持续识别中......");
                     } else {
                         textHuanying.setVisibility(View.VISIBLE);
@@ -333,8 +568,13 @@ public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnCl
                     Bitmap bitmap = BitmapFactory.decodeFile(absolutePath);
                     nameImage.setImageBitmap(bitmap);
                     nameText.setTextColor(Color.parseColor("#00BAF2"));
-                    nameText.setText(FileUtils.spotString(user.getUserName()) + " 考勤成功");
-                    attendanceTimeText.setText("考勤时间：" + TimeUtils.getTimeShort(date));
+                    nameText.setText(FileUtils.spotString(user.getUserName()) + " 验证成功");
+                    TtsManager.getInstance(FaceRGBAttendanceActivity.this).speakText("核验通过");
+                    attendanceTimeText.setText("验证时间：" + TimeUtils.getTimeShort(date));
+
+                    String certificateNumber = user.getImageName().substring(0, user.getImageName().lastIndexOf("."));
+                    //更新到访记录
+                    updateByCertificateNumber(certificateNumber);
                 }
 
             }
@@ -583,5 +823,6 @@ public class FaceRGBAttendanceActivity extends BaseActivity implements View.OnCl
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        TtsManager.getInstance(this).destory();
     }
 }

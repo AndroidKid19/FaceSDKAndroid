@@ -98,17 +98,17 @@ public class StartActivity extends BaseActivity {
                         /**
                          *要执行的操作
                          */
-//                        startActivity(new Intent(mContext, HomeActivity.class));
+                        startActivity(new Intent(mContext, HomeActivity.class));
 
-                        mLiveType = com.baidu.idl.main.facesdk.identifylibrary.model.SingleBaseConfig.getBaseConfig().getType();
-
-                        Log.i("HomeActivity",mLiveType+"");
-                        // 人证核验
-                        judgeLiveType(mLiveType,
-                                FaceRGBPersonActivity.class,
-                                FaceIRTestimonyActivity.class,
-                                FaceDepthTestimonyActivity.class,
-                                FaceRGBIRDepthTestimonyActivity.class);
+//                        mLiveType = com.baidu.idl.main.facesdk.identifylibrary.model.SingleBaseConfig.getBaseConfig().getType();
+//
+//                        Log.i("HomeActivity",mLiveType+"");
+//                        // 人证核验
+//                        judgeLiveType(mLiveType,
+//                                FaceRGBPersonActivity.class,
+//                                FaceIRTestimonyActivity.class,
+//                                FaceDepthTestimonyActivity.class,
+//                                FaceRGBIRDepthTestimonyActivity.class);
                         finish();
                     }
                 };

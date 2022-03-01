@@ -44,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="人脸注册"
+            android:text="访客登记"
             android:textColor="@color/white"
             android:textSize="@dimen/title_font" />
 
@@ -72,7 +72,7 @@
         android:textSize="22sp"
         android:text=""/>
 
-    <!--百度大脑技术支持-->
+    <!--明杰数字技术支持-->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

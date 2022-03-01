@@ -79,44 +79,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_horizontal">
-
-            <RelativeLayout
-                android:layout_weight="1"
-                android:id="@+id/home_gateRl"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:id="@+id/home_gateIv"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:adjustViewBounds="true"
-                    android:scaleType="fitXY"
-                    android:src="@mipmap/bg_homepage_1" />
-
-                <TextView
-                    android:id="@+id/home_gateTv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/home_gateIv"
-                    android:layout_marginLeft="@dimen/start_15"
-                    android:layout_marginBottom="31dp"
-                    android:text="@string/home_gate"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/home_tv" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/home_gateIv"
-                    android:layout_marginLeft="@dimen/start_15"
-                    android:layout_marginBottom="@dimen/start_10"
-                    android:text="GATE MODE"
-                    android:textColor="@color/attribute_activition_on"
-                    android:textSize="13sp" />
-
-            </RelativeLayout>
-
             <RelativeLayout
                 android:layout_weight="1"
                 android:id="@+id/home_checkRl"
@@ -154,10 +116,52 @@
                     android:textColor="@color/attribute_activition_on"
                     android:textSize="13sp" />
             </RelativeLayout>
+
+            <RelativeLayout
+                android:visibility="invisible"
+                android:id="@+id/home_personRl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/home_personIv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitXY"
+                    android:src="@mipmap/bg_homepage_5" />
+
+                <TextView
+                    android:id="@+id/home_personTv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/home_personIv"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginBottom="31dp"
+                    android:text="@string/home_person"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/home_tv" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/home_personIv"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/home_person_english"
+                    android:textColor="@color/attribute_activition_on"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+
+
+
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/home_payLl"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/home_gateLl"
@@ -241,49 +245,50 @@
         </LinearLayout>
 
         <LinearLayout
+            android:visibility="gone"
             android:id="@+id/home_personLl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/home_payLl"
             android:layout_weight="1"
             android:gravity="center_horizontal">
-
             <RelativeLayout
-                android:id="@+id/home_personRl"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:id="@+id/home_gateRl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
                 <ImageView
-                    android:id="@+id/home_personIv"
+                    android:id="@+id/home_gateIv"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
                     android:scaleType="fitXY"
-                    android:src="@mipmap/bg_homepage_5" />
+                    android:src="@mipmap/bg_homepage_1" />
 
                 <TextView
-                    android:id="@+id/home_personTv"
+                    android:id="@+id/home_gateTv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/home_personIv"
-                    android:layout_marginLeft="15dp"
+                    android:layout_alignBottom="@+id/home_gateIv"
+                    android:layout_marginLeft="@dimen/start_15"
                     android:layout_marginBottom="31dp"
-                    android:text="@string/home_person"
+                    android:text="@string/home_gate"
                     android:textColor="@color/white"
                     android:textSize="@dimen/home_tv" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/home_personIv"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="10dp"
-                    android:text="@string/home_person_english"
+                    android:layout_alignBottom="@+id/home_gateIv"
+                    android:layout_marginLeft="@dimen/start_15"
+                    android:layout_marginBottom="@dimen/start_10"
+                    android:text="GATE MODE"
                     android:textColor="@color/attribute_activition_on"
                     android:textSize="13sp" />
+
             </RelativeLayout>
+
 
             <RelativeLayout
                 android:id="@+id/home_driveRl"
@@ -326,6 +331,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:visibility="gone"
             android:gravity="center_horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -465,6 +471,7 @@
 
     <TextView
         android:id="@+id/home_dataTv"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/home_baiduTv"

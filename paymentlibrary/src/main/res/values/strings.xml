@@ -75,7 +75,7 @@
 
     <string name="attribute_is_available">BaseConfig的isAttribute要为true</string>
 
-    <string name="bottom_content">— 百度大脑技术支持 —</string>
+    <string name="bottom_content">— 明杰数字技术支持 —</string>
 
 
     <string name="cw_idphoto">证件照模型：所处理的图片主要为身份证芯片照、人脸大小很小的证件照原图等。常用于政务身份核验、社保生存证明、酒店前台人证合一等场景</string>
@@ -144,7 +144,7 @@
     <string name="home_attention_english">ATTENTION MODE</string>home_checkTv
     <string name="home_face">人脸注册</string>
     <string name="home_faceLibrary">人脸库管理</string>
-    <string name="home_baidu">-- 百度大脑技术支持 --</string>
+    <string name="home_baidu">-- 明杰数字技术支持 --</string>
     <string name="testimony_preview">预览模式</string>
     <string name="testimony_development">开发模式</string>
     <string name="hint_adain">重新上传</string>

@@ -68,9 +68,11 @@ public class UserInfoManager {
                 FaceApi.getInstance().userDeletes(list , userName != null && !"".equals(userName) , dbLoadListener);
                 FaceApi.getInstance().isDelete = false;
                 listener.userListDeleteSuccess();
+
             }
         });
     }
+
 
     /**
      * 获取用户列表信息
