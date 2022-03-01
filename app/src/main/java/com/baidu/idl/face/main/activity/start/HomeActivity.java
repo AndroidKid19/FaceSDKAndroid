@@ -20,6 +20,7 @@ import android.view.LayoutInflater;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
@@ -162,6 +163,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         mContext = this;
         initView();
@@ -746,10 +748,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                         intent.putExtra("certificateNumber", newsBeanList.getData().getCertificateNumber());
                         intent.putExtra("orgTitle", newsBeanList.getData().getOrgTitle());
                         startActivity(intent);
+                    }else{
+                        ToastUtils.toast(HomeActivity.this,
+                                "暂无您的预约信息");
                     }
                 } else {
                     ToastUtils.toast(HomeActivity.this,
-                            "暂无预约信息");
+                            "暂无您的预约信息");
                 }
             }
 

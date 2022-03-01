@@ -720,16 +720,10 @@ public class FaceRegisterNewActivity extends BaseActivity implements View.OnClic
     public void updateByCertificateNumber(String cardNumber,String personalPhotos){
         String hostUrl = URLUtils.hostUrl+"/organ/visitRegisterRecord/updateByCertificateNumber";
         OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
-        RequestBody formBody = new FormBody.Builder()
-                .add("certificateNumber",cardNumber)
-                .add("visitStatus","1")
-                .add("personalPhotos",personalPhotos)
-                .build();
-
         Map<String,String> paramsMap = new HashMap<>();
         paramsMap.put("certificateNumber",cardNumber);
         paramsMap.put("visitStatus","1");
+        paramsMap.put("personalPhotos",personalPhotos);
         Gson gson = new Gson();
         /**
          * 创建请求的参数body
